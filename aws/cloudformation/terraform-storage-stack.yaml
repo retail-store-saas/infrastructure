@@ -1,0 +1,47 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: Terraform state storage
+Parameters:
+  TerraformStateBucketName:
+    Type: String
+    Default: srs-terraform-state-storage
+
+Resources:
+  TerraformStateBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      AccessControl: Private
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: aws:kms
+      BucketName: !Sub ${TerraformStateBucketName}-${AWS::AccountId}-${AWS::Region}
+      VersioningConfiguration:
+        Status:  Enabled
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      
+  TerraformStateLockTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub ${TerraformStateBucketName}-lock-${AWS::AccountId}-${AWS::Region}
+      AttributeDefinitions:
+        - 
+          AttributeName: "LockID"
+          AttributeType: "S"
+      KeySchema:
+        -
+          AttributeName: "LockID"
+          KeyType: "HASH"
+      ProvisionedThroughput:
+        ReadCapacityUnits: "5"
+        WriteCapacityUnits: "5"
+
+Outputs:
+  TerraformStateLockTable:
+    Export:
+      Name: !Sub "${AWS::StackName}-terraform-state-lock-table"
+    Value: !Ref TerraformStateLockTable
+

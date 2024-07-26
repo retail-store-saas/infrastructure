@@ -1,0 +1,7 @@
+kind: ConfigMap
+metadata:
+  name: argocd-rbac-cm
+  namespace: argocd
+data:
+  policy.csv: |
+    g, kamil, role:admin
